@@ -5,16 +5,20 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FeedTheSnake"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <TextBlock Text="Hello" x:Name="txtBlock"/>
-        <Canvas Grid.Column="1" Margin="0" Name="paintCanvas" Background="AliceBlue" Panel.ZIndex="-2"
+        Title="MainWindow" Height="700" Width="700" Closing="Window_Closing">
+    <!--<Grid>-->
+        <!--<Grid.ColumnDefinitions>
+            <ColumnDefinition Width="8*"/>
+            <ColumnDefinition Width="52*"/>
+        </Grid.ColumnDefinitions>-->
+        <!--<TextBlock Text="Hello" x:Name="txtBlock"/>-->
+    <StackPanel>
+           <Border Margin="0" BorderBrush="Black" BorderThickness="5">
+        <Canvas  Name="paintCanvas" Background="AliceBlue" 
+                Width ="600" Height="600" 
                 MouseLeftButtonDown="paintCanvas_MouseLeftButtonDown"
-                MouseMove="paintCanvas_MouseMove">
+                MouseMove="paintCanvas_MouseMove" HorizontalAlignment="Center" VerticalAlignment="Center"
+                MouseLeave="paintCanvas_MouseLeave">
            
             <!--<Polyline Name="shapePoly" Panel.ZIndex="1"            
             Stroke="Black"
@@ -37,6 +41,10 @@
             <Ellipse Width="30" Height="30" Fill="Red" x:Name="head" RenderTransformOrigin="0.586,-0.05" Canvas.Left="-14" Canvas.Top="-16"/>-->
 
 
-        </Canvas>
-    </Grid>
+        </Canvas></Border>
+        <TextBlock>Hell</TextBlock>
+    </StackPanel>
+ 
+        
+    <!--</Grid>-->
 </Window>
