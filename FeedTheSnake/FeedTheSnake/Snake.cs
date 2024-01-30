@@ -27,6 +27,8 @@ namespace FeedTheSnake
             Body = body;
             Segment = segment;
             HeadDiameter = Segment*2;
+
+            //hello
             
             //PaintCanvas = paintCanvas;
             Length = body.Count;
