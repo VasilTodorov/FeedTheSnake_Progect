@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
@@ -15,156 +17,148 @@ using System.Windows.Shapes;
 namespace FeedTheSnake
 {
     /// <summary>
-    /// class DrawSnake illustrates the drawing
+    /// class Snake illustrates the drawing
     /// and fuctionality of the snake in the game
     /// feed the snake
     /// </summary>
-    public class DrawSnake
-    {
-        private const double SEGMENT = 20;//TODO can make it const
-        private bool susspended = true;
+    class Snake : INotifyPropertyChanged
+    {      
 
-        private Canvas paintCanvas;
-        private Polyline body;
-        private Ellipse head;
-
+        private double segment;
         private int length;
-		
+        private Queue<Point>? body;
+        private Point bodyEndPoint;
 
-        /// <summary>
-        /// Default constructor 
-        /// </summary>
-        /// <param name="paintCanvas"></param>
-        public DrawSnake(Canvas paintCanvas)
-        {          
-            //init variables
-            this.paintCanvas = paintCanvas;            
-            body = new Polyline();
-            head = new Ellipse();
-        
-            head.MouseLeftButtonDown += (x, y) => { susspended = false; };
+        public event PropertyChangedEventHandler? PropertyChanged;
 
-            DefaultSnake();
-         
-            paintCanvas.Children.Add(body);
-            paintCanvas.Children.Add(head);
+        public Snake(double segment)
+        {
+            Segment = segment;
+            Body = new Queue<Point>();
+            Reset();
         }
-      
-        //public void HeadSelection(MouseButtonEventHandler a)
-        //{
-        //    head.MouseLeftButtonDown += a;
-        //}
-        /// <summary>
-        /// The length of the snake cant never be less than 3
-        /// </summary>
+
+        public Snake() : this(20)
+        { }
+       
+
+        public Point HeadPoint { get;private set; }
+        
+        public double Segment 
+        {
+            get => segment;
+            private set => segment = value>=1?value:1;
+        }
         public int Length 
         {
             get => length;
-            set => length = value >= 3 ? value : 3 ; 
+            set 
+            { 
+                length = value >= 3 ? value : 3;
+                OnPropertyChanged("Length");
+            }
         }
+
+        public Queue<Point> Body
+        {
+            get
+            {              
+                return new Queue<Point>(body!);
+            }
+            private set
+            {
+                body = value!=null?value:new Queue<Point>();
+            }
+            
+        }
+
+
+        
+      
+        
+        public void Reset()
+        {
+            Segment = segment;
+            body!.Clear();
+
+            body.Enqueue(new Point(Segment, Segment*2));
+            body.Enqueue(new Point(Segment * 2, Segment*2));
+            body.Enqueue(new Point(Segment * 3, Segment*2));
+            length = Body.Count;
+            HeadPoint = this.body!.Last();
+            bodyEndPoint = HeadPoint;
+        }
+        
         /// <summary>
         /// Moves DrawSnake to a given point
         /// </summary>
         /// <param name="goal"></param>
         public void Move(Point goal)
         {            
-            if (susspended) { return; }           
+                     
             
-            //the end of the snake body weher the head will be
-            Point headBodyPoint = body.Points.Last();           
-
             //the snake moves only one SEGMENT at a time
             //by adding point at the end and removing at the beginig of body
-            if (headBodyPoint.Distance(goal) > SEGMENT)
+            while (bodyEndPoint.Distance(goal) > Segment)
             {
                 //the added new point is at a distance "SEGMENT" from "headBodyPoint"
                 //towards goal point
-                body.Points.Add(headBodyPoint.MoveTowards(goal, SEGMENT));
+                bodyEndPoint = bodyEndPoint.MoveTowards(goal, Segment);
+                body!.Enqueue(bodyEndPoint);
 
+                
                 //removes points from snake tail untill length == body.Points.Count
                 //this way we show the new lemgth of the snake
-                while (body.Points.Count > length)
-                { body.Points.RemoveAt(0); }
+                while (body.Count > length)
+                { body.Dequeue(); }
 
                 //And repeat untill the distance is less than SEGMENT
-                
-                Move(goal);
+               //if(!isValidMove())
+               // {
+               //     susspended = true;
+               //     return;
+               // }
             }
-
-            Canvas.SetTop(head, goal.Y - head.Height / 2);
-            Canvas.SetLeft(head, goal.X - head.Width / 2);
-        }
-
-        public bool isValidMove()
-        {
-            return !(this.IsEatingItself() || this.isHittingTheWall());
-        }
-
-        private bool IsEatingItself()
-        {
-            //eating itself moves 
-            //back move
-            //body eat
-            //tail eat
-
-
-            //Point headPoint = new Point(Canvas.GetLeft(head), Canvas.GetTop(head));
-            ////Point headPoint = body.Points.Last();
-            ////Bug when it its
-            ///
-            // body
-            //for (int i = 1; i < body.Points.Count - 3; i++)
-            //{
-            //    if (body.Points[i].Distance(headPoint) < SEGMENT)
-            //        return true;
-            //}
-
-            //tail 
-            //if (body.Points[0].Distance(headPoint) < SEGMENT)
-            //    return true;
-            return false;
-        }
-
-        private bool isHittingTheWall() {
-            return false;
-        }
-        /// <summary>
-        /// Sets DrawSnake body and head default values
-        /// also the length of body
-        /// </summary>
-        public void DefaultSnake()
-        {
-            //clears old body
-            body.Points.Clear();
-
-            //sets default cordinates for body
-            body.Points.Add(new Point(0, 0 + 40));
-            body.Points.Add(new Point(SEGMENT, SEGMENT + 40));
-            body.Points.Add(new Point(SEGMENT * 2, 0 + 40));
-            body.Points.Add(new Point(SEGMENT * 3, SEGMENT + 40));
-            body.Points.Add(new Point(SEGMENT * 4, SEGMENT + 40));
-            body.Points.Add(new Point(SEGMENT * 5, SEGMENT + 40));
-            body.Points.Add(new Point(SEGMENT * 6, SEGMENT + 40));
-
-            //sets field length of body new value
-            length = body.Points.Count;
-
-            //sets default properties for body 
-            body.Stroke = Brushes.Green;          
-            body.StrokeThickness = SEGMENT;
-            //body.StrokeStartLineCap = PenLineCap.Round;
-            body.StrokeEndLineCap = PenLineCap.Round;
-
-            //sets default properties for head           
-            head.Width = SEGMENT * 2;
-            head.Height = SEGMENT * 2;
-            head.Fill = Brushes.Green;
+            HeadPoint = goal;
             
-            //sets head position
-            Point headPoint = body.Points.Last();
-            Canvas.SetTop(head, headPoint.Y - head.Height / 2);
-            Canvas.SetLeft(head, headPoint.X - head.Width / 2);
-
         }
+
+
+        public bool IsEatingItself()
+        {
+            
+
+            Queue<Point> examPoints = new Queue<Point>(body!);
+            while (examPoints.Count > 3) 
+            {
+                var currentPoint = examPoints.Dequeue();
+                if(currentPoint.Distance(HeadPoint) < Segment)
+                {
+                    return true;
+                }
+            }
+            //examPoints.Dequeue();
+            return false;
+        }
+
+        
+        public bool IsHittingObstacle(List<Obstacle> obstacles, double coeficent) {
+
+            foreach(var obstacle in obstacles)
+            {
+                if (obstacle.IsCircleIntersecting(HeadPoint, Segment, coeficent))
+                    return true;
+            }
+            return false;
+        }
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            if(propertyName.Equals(nameof(Length)))
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+        
     }
 }

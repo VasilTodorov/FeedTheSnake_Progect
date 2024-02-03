@@ -24,7 +24,7 @@ namespace FeedTheSnake
         {
             var normal = Point.Subtract(b, a);
             normal.Normalize();
-            // hi
+            
             return a + (normal * distance);
         }
 
