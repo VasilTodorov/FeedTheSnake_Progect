@@ -9,6 +9,12 @@ namespace FeedTheSnake
 {
     public static class ExtensionHelper
     {
+        /// <summary>
+        /// Distance between points
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static double Distance(this Point a, Point b)
         {
             return Point.Subtract(a, b).Length;

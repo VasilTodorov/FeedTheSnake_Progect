@@ -22,6 +22,7 @@ namespace SnakeApp
         public MainWindow()
         {
             InitializeComponent();
+            //Binds game Score to txtBlock
             Binding b = new Binding
             {
                 ElementName = "feedTheSnake",
@@ -33,19 +34,30 @@ namespace SnakeApp
             DataContext = feedTheSnake;
             txtScore.SetBinding(TextBlock.TextProperty, b);
 
+            //Binds game ExpiretionTime to SlrExpiretionTime
             Binding s = new Binding
             {
                 ElementName = "feedTheSnake",
-                Path = new PropertyPath("ExpiretionTime"),
-                //Mode = BindingMode.TwoWay,
+                Path = new PropertyPath("ExpiretionTime"),                
                 UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
 
             };
             DataContext = feedTheSnake;
             SlrExpiretionTime.SetBinding(Slider.ValueProperty, s);
-           //txtScore.SetBinding(TextBlock.TextProperty, s);
-            //feedTheSnake.fa
 
+            //Binds game State to txtState
+            Binding st = new Binding
+            {
+                ElementName = "feedTheSnake",
+                Path = new PropertyPath("State"),
+                Mode = BindingMode.OneWay,
+                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+
+            };
+            DataContext = feedTheSnake;
+            txtState.SetBinding(TextBlock.TextProperty, st);
+
+            feedTheSnake.NewGame();
 
         }
 
@@ -65,7 +77,7 @@ namespace SnakeApp
         }
 
         private void StackPanel_Checked(object sender, RoutedEventArgs e)
-        {
+        {            
             var checkedButton = (RadioButton)e.Source;
             feedTheSnake.Level = checkedButton.Name switch
             {
@@ -76,8 +88,24 @@ namespace SnakeApp
                 _ => GameLevel.ZERO
             };
            
+            FeedTheSnake.SnakeGame a = new FeedTheSnake.SnakeGame();
             feedTheSnake.NewGame();
             
+        }
+
+        private void HelpButton_Click(object sender, RoutedEventArgs e)
+        {
+            helpPopup.IsOpen = true;
+
+
+            this.IsEnabled = false;
+
+
+        }
+
+        private void HelpWindow_PopupClosed(object sender, EventArgs e)
+        {
+            this.IsEnabled = true;
         }
     }
 }

@@ -11,11 +11,19 @@ using System.Windows.Shapes;
 
 namespace FeedTheSnake
 {
+    /// <summary>
+    /// illustrates a collection of ellipses for food to be drawn
+    /// when we change the collection we also change a given FoodFarm
+    /// it is expected FoodFarm.FoodCollection to be empty otherwise
+    /// it will be emptied
+    /// </summary>
     internal class FoodCollection : Collection<Ellipse>
     {
         private FoodFarm foodfarm;
         public FoodCollection(FoodFarm farm) : base()
         {
+            if(farm.FoodCollection.Count > 0)
+                farm.FoodCollection.Clear();
             foodfarm = farm;
         }
         protected override void InsertItem(int index, Ellipse item)

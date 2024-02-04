@@ -18,23 +18,25 @@ using System.Windows.Shapes;
 
 namespace FeedTheSnake
 {
-      
-    /// <summary>
-    /// Interaction logic for SnakeGame.xaml
-    /// </summary>
-    public partial class SnakeGame : UserControl,INotifyPropertyChanged
-    {
-        public enum GameState { ONGOING , PAUSED, OVER, PREPEARING}
-        public enum GameLevel { ZERO, FIRST, SECOND, THIRD}
-        
-        
 
-        private const double UNIT = 20;
+    /// <summary>
+    ///Draws and moves snake and foods on canvas
+    ///in the User Controls
+    /// </summary>
+    public partial class SnakeGame : UserControl, INotifyPropertyChanged
+    {
+        public enum GameState { ONGOING, PAUSED, OVER, PREPEARING }
+        public enum GameLevel { ZERO, FIRST, SECOND, THIRD }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        #region Fields
+        private double unit;
         private static Random rnd = new Random();
 
-        //private bool susspended;
-        private int expiretionTime;
         private int score;
+        private GameState state;
+
         private Snake snake;
         private Polyline? body;
         private Ellipse? head;
@@ -43,110 +45,137 @@ namespace FeedTheSnake
         private FoodCollection foodStock;
 
         private List<Obstacle> obstacles;
-        private List<Rectangle> rectangles;
+        private List<Rectangle> rectangles; 
+        #endregion
 
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        //public bool susspended { get; private set; }
-        //public bool Ongoing { get; set; }
+        #region Properties
+        /// <summary>
+        /// time for food to expire
+        /// </summary>
         public int ExpiretionTime
         {
             get
-            { return expiretionTime; }
+            { return farm.ExpiretionTime; }
             set
-            { 
-                expiretionTime = value >= 1 ? value : 1;
+            {
+                farm.ExpiretionTime = value;
+
                 OnPropertyChanged(nameof(ExpiretionTime));
             }
         }
-        public int Score 
-        { 
-          get
+        /// <summary>
+        /// Game Score
+        /// </summary>
+        public int Score
+        {
+            get
             {
                 return score;
             }
-          set
+            set
             {
-                score = value>=0?value:0;
+                score = value >= 0 ? value : 0;
                 OnPropertyChanged(nameof(Score));
             }
         }
-        public GameState State { get; set; }
-        public GameLevel Level { get; set; }
+        /// <summary>
+        /// Current game state
+        /// </summary>
+        public GameState State
+        {
+            get
+            {
+                return state;
+            }
+            set
+            {
+                state = value;
+                OnPropertyChanged("State");
+            }
+        }
+        /// <summary>
+        /// Current game level
+        /// </summary>
+        public GameLevel Level { get; set; } 
+        #endregion
         public SnakeGame()
         {
             InitializeComponent();
-
-            State = GameState.PREPEARING;           
-            Level = GameLevel.ZERO;           
-            farm = new FoodFarm(UNIT);
-            snake = new Snake(UNIT);
+            unit = 20;
+            State = GameState.PREPEARING;
+            Level = GameLevel.ZERO;
+            farm = new FoodFarm(unit);
+            snake = new Snake(unit);
             body = new Polyline();
             head = new Ellipse();
             foodStock = new FoodCollection(farm);
             obstacles = new List<Obstacle>();
-            //obstacles = Obstacle.LevelZero(snakeCanvas.ActualWidth, snakeCanvas.ActualHeight, UNIT);           
             rectangles = new List<Rectangle>();
             Score = 0;
-            ExpiretionTime = 1;
-
-            //DrawSnakeBody();
-            //DrawSnakeHead();
-            //DrawObstacles();
+            ExpiretionTime = 5;
 
             snakeCanvas.Children.Add(body);
             snakeCanvas.Children.Add(head);
 
             farm.inspectionTimer.Tick += DrawFood;
-            farm.inspectionTimer.Tick += EatExpireFoods;
-            
-            // GamePause();
+            farm.inspectionTimer.Tick += DeleteExpiredFoods;
+
             head.MouseLeftButtonDown += (x, y) => { GameStart(); };
             snake.PropertyChanged += (x, y) => { Score++; };
-            farm.PropertyChanged += (x, y) => { ExpiretionTime=farm.ExpiretionTime; };
         }
         #region ClientMethods
+        /// <summary>
+        /// Initialize a new game  with given parameters
+        /// </summary>
         public void NewGame()
         {
             if (State != GameState.OVER &&
                 State != GameState.PREPEARING &&
                 State != GameState.PAUSED) { return; }
-            
+            unit = snakeCanvas.ActualHeight / 20;
             Score = 0;
             farm.Stop();
+            farm.FoodRadius = unit;
             ClearFood();
-            snake.Reset();
+            snake.Reset(unit);
             DrawSnakeBody();
             DrawSnakeHead();
             TurnLevel(Level);
             DrawObstacles();
             State = GameState.PAUSED;
         }
-        public void GameOver()
+        /// <summary>
+        /// End Game
+        /// </summary>
+        public void GameOVER()
         {
             if (State != GameState.ONGOING) { return; }
-            //susspended = true;
-            farm.Stop();
+             farm.Stop();
             State = GameState.OVER;
         }
+        /// <summary>
+        /// Pause Game
+        /// </summary>
         public void GamePause()
         {
             if (State != GameState.ONGOING) { return; }
-            //susspended = true;
             farm.Stop();
             State = GameState.PAUSED;
         }
-
+        /// <summary>
+        /// Continue Game
+        /// </summary>
         public void GameStart()
         {
             if (State != GameState.PAUSED) { return; }
-            //susspended = false;
             farm.Start();
             State = GameState.ONGOING;
         }
         #endregion
-
         #region DrawingMethods
+        /// <summary>
+        /// Draws the body of the snake given with class Snake
+        /// </summary>
         private void DrawSnakeBody()
         {
             body!.Points = new PointCollection(snake.Body);
@@ -156,7 +185,9 @@ namespace FeedTheSnake
             body.StrokeStartLineCap = PenLineCap.Triangle;
             body.Stroke = Brushes.Green;
         }
-
+        /// <summary>
+        ///  Draws the head of the snake given with class Snake
+        /// </summary>
         private void DrawSnakeHead()
         {
             head!.Width = 2 * snake.Segment;
@@ -167,10 +198,14 @@ namespace FeedTheSnake
             Canvas.SetLeft(head, snake.HeadPoint.X - head.Width / 2);
             Canvas.SetTop(head, snake.HeadPoint.Y - head.Height / 2);
         }
-
+        /// <summary>
+        /// Draw Food for the game
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void DrawFood(object? sender, EventArgs e)
         {
-            if(farm.CurrentTime % farm.ProductionTime != 0) { return; }
+            if (farm.CurrentTime % farm.ProductionTime != 0) { return; }
             if (farm.Capasity > foodStock.Count)
             {
                 var food = new Ellipse();
@@ -187,13 +222,14 @@ namespace FeedTheSnake
 
                 Panel.SetZIndex(food, -1);
 
-                foodStock.Add(food);
-                //farm.AddFoodCenterPosition(foodPosition);
+                foodStock.Add(food);                
 
                 snakeCanvas.Children.Add(food);
             }
         }
-
+        /// <summary>
+        /// Draw Obstacles
+        /// </summary>
         private void DrawObstacles()
         {
 
@@ -222,75 +258,88 @@ namespace FeedTheSnake
 
         #endregion
         #region UtilityMethods
-        private void EatFood(int index)
+        /// <summary>
+        /// Delete food at a given index of foodStock and canvas
+        /// </summary>
+        /// <param name="index"></param>
+        private void DeleteFoodAt(int index)
         {
             if (index < 0 || index >= foodStock.Count) return;
 
             snakeCanvas.Children.Remove(foodStock[index]);
             foodStock.RemoveAt(index);
         }
-
-        private void EatExpireFoods(object? sender, EventArgs e)
+        /// <summary>
+        /// Delete all expired foods in foodStock and canvas
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DeleteExpiredFoods(object? sender, EventArgs e)
         {
             //farm.CurrentTime++;
-            while(farm.DeleteEpiredFood(EatFood, ExpiretionTime))
+            while (farm.DeleteEpiredFood(DeleteFoodAt))
             { }
         }
 
-
+        /// <summary>
+        /// Clear all foods in foodStock and canvas
+        /// </summary>
         private void ClearFood()
         {
-            foreach(var food in foodStock)
+            foreach (var food in foodStock)
             {
                 snakeCanvas.Children.Remove(food);
             }
             foodStock.Clear();
             //farm.Clear();
         }
-
+        /// <summary>
+        /// Change level settings without redrawing
+        /// </summary>
+        /// <param name="level"></param>
         private void TurnLevel(GameLevel level)
         {
             double canvasWidth = snakeCanvas.ActualWidth;
             double canvasHeight = snakeCanvas.ActualHeight;
 
-            //obstacles = Obstacle.LevelZero(canvasWidth, canvasHeight, UNIT);
             obstacles.Clear();
             switch (level)
             {
                 case GameLevel.ZERO:
-                    obstacles = Obstacle.LevelZero(canvasWidth, canvasHeight, UNIT);
+                    obstacles = Obstacle.LevelZero(canvasWidth, canvasHeight, unit);
                     farm.Capasity = 6;
                     farm.ProductionTime = 1;
-                    farm.ExpiretionTime = 4;
                     break;
                 case GameLevel.FIRST:
-                    obstacles = Obstacle.LevelOne(canvasWidth, canvasHeight, UNIT);
+                    obstacles = Obstacle.LevelOne(canvasWidth, canvasHeight, unit);
                     farm.Capasity = 5;
                     farm.ProductionTime = 2;
-                    farm.ExpiretionTime = 6;
                     break;
                 case GameLevel.SECOND:
-                    obstacles = Obstacle.LevelTwo(canvasWidth, canvasHeight, UNIT);
+                    obstacles = Obstacle.LevelTwo(canvasWidth, canvasHeight, unit);
                     farm.Capasity = 4;
                     farm.ProductionTime = 3;
-                    farm.ExpiretionTime = 3;
                     break;
                 case GameLevel.THIRD:
-                    obstacles = Obstacle.LevelThree(canvasWidth, canvasHeight, UNIT);
+                    obstacles = Obstacle.LevelThree(canvasWidth, canvasHeight, unit);
                     farm.Capasity = 3;
                     farm.ProductionTime = 4;
-                    farm.ExpiretionTime = 1;
                     break;
                 default:
-                    obstacles = Obstacle.LevelZero(canvasWidth, canvasHeight, UNIT);
-                    farm.Capasity = 5;
+                    obstacles = Obstacle.LevelZero(canvasWidth, canvasHeight, unit);
+                    farm.Capasity = 6;
                     farm.ProductionTime = 1;
-                    farm.ExpiretionTime = 2;
+                    //farm.ExpiretionTime = 2;
                     break;
             }
 
 
         }
+        /// <summary>
+        /// Get a random Point from canvas witch doesnt intersect with any obstacle at 
+        /// a distance farm.FoodRadius
+        /// </summary>
+        /// <returns></returns>
         private Point GetRandomCanvasPoint()
         {
 
@@ -307,12 +356,16 @@ namespace FeedTheSnake
             return randomPoint;
 
         }
-
+        /// <summary>
+        /// Checks if point is valid for food position
+        /// </summary>
+        /// <param name="point"></param>
+        /// <returns></returns>
         private bool IsValidPoint(Point point)
         {
             foreach (var obstacle in obstacles)
             {
-                if (obstacle.IsCircleIntersecting(point, UNIT, 1))
+                if (obstacle.IsCircleIntersecting(point, unit, 1))
                     return false;
             }
             return true;
@@ -320,67 +373,59 @@ namespace FeedTheSnake
 
         #endregion
         #region MouseControls
+        /// <summary>
+        /// Moves the snake if game State is Ongoing
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void snakeCanvas_MouseMove(object sender, MouseEventArgs e)
         {
-            if (State!=GameState.ONGOING) return;
+
+            if (State != GameState.ONGOING) return;
             var currentPosition = e.GetPosition(snakeCanvas);
             snake.Move(currentPosition);
             DrawSnakeBody();
             DrawSnakeHead();
             if (farm.IsNerbyFoodEaten(currentPosition, out int foodIndex))
             {
-                EatFood(foodIndex);
+                DeleteFoodAt(foodIndex);
                 snake.Length++;
             }
             if (snake.IsEatingItself() || snake.IsHittingObstacle(obstacles, 0.9))
             {
-                GameOver();
-                //Ongoing = false;
+                GameOVER();               
             }
         }
-
-        private void snakeCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            //snake.Length++;
-            //snake.Reset();
-            //susspended = false;
-            //farm.Stop();
-            //TurnLevel(Level);
-
-            //DrawObstacles();
-            ////level++;
-            //if (State == GameState.ONGOING)
-            //{
-            //    GamePause();
-            //}
-            //Score++;
-            //farm.inspectionTimer = (System.Windows.Threading.DispatcherTimer)TimeSpan.FromSeconds(0.4);
-        }
-
+        /// <summary>
+        /// If it leavs user control pause game
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void snakeCanvas_MouseLeave(object sender, MouseEventArgs e)
         {
-            //snake.Reset();
-            //DrawSnakeBody();
-            //DrawSnakeHead();
-            //susspended = false
-            if(State == GameState.ONGOING)
+            if (State == GameState.ONGOING)
             {
                 GamePause();
-            }            
+            }
         }
+        /// <summary>
+        /// Pauses game when ButtomLeft is UP
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void snakeCanvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (State == GameState.ONGOING)
             {
                 GamePause();
-            }          
+            }
 
         }
         #endregion
 
         protected virtual void OnPropertyChanged(string propertyName)
         {
-            if (propertyName.Equals(nameof(Score)) || propertyName.Equals(nameof(ExpiretionTime)))
+            if (propertyName.Equals(nameof(Score)) || propertyName.Equals(nameof(ExpiretionTime)) || propertyName.Equals(nameof(State)))
             {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }

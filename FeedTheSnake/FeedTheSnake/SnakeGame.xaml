@@ -6,13 +6,9 @@
              xmlns:local="clr-namespace:FeedTheSnake"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" >
-    <!--<Border BorderBrush="Black" BorderThickness="5">-->
-        <Canvas x:Name="snakeCanvas" Background="AliceBlue"
+    <Canvas x:Name="snakeCanvas" Background="AliceBlue"
                 MouseMove="snakeCanvas_MouseMove"
-                MouseLeftButtonDown="snakeCanvas_MouseLeftButtonDown"
                 MouseLeftButtonUp="snakeCanvas_MouseLeftButtonUp"
                 MouseLeave="snakeCanvas_MouseLeave">
-            <!--<Rectangle Width="100" Height="10" Fill="Brown"></Rectangle>-->
-        </Canvas>
-    <!--</Border>-->
+    </Canvas>
 </UserControl>
