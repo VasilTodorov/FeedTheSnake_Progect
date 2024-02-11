@@ -46,7 +46,7 @@ namespace FeedTheSnake
         #region Constructors
         public FoodFarm(double foodRadius, int capasity, int productionTime)
         {
-            ExpiretionTime = 5;
+            ExpiretionTime = 6;
             CurrentTime = 0;
             FoodRadius = foodRadius;
             Capasity = capasity;
