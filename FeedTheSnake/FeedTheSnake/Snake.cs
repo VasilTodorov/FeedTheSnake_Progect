@@ -16,6 +16,8 @@ using System.Windows.Shapes;
 
 namespace FeedTheSnake
 {
+    //Comment: I would like an interface. ISnake
+
     /// <summary>
     /// class Snake illustrates the drawing
     /// and fuctionality of the snake in the game
@@ -52,6 +54,7 @@ namespace FeedTheSnake
         public int Length 
         {
             get => length;
+            // comment: I don't like having a public setter for length. Snake should have a method eat
             set 
             { 
                 length = value >= 3 ? value : 3;
@@ -141,7 +144,7 @@ namespace FeedTheSnake
             return false;
         }
 
-        
+        // Comments: Don't like this coeficient here, other people are not expecting to know stuf like that. I would add it as a constant
         public bool IsHittingObstacle(List<Obstacle> obstacles, double coeficent) {
 
             foreach(var obstacle in obstacles)

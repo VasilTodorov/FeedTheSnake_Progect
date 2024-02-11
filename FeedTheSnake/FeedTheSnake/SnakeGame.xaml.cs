@@ -33,6 +33,7 @@ namespace FeedTheSnake
         private static Random rnd = new Random();
 
         //private bool susspended;
+        // Comment: expiration not expiretion
         private int expiretionTime;
         private int score;
         private Snake snake;
@@ -81,7 +82,9 @@ namespace FeedTheSnake
             Level = GameLevel.ZERO;           
             farm = new FoodFarm(UNIT);
             snake = new Snake(UNIT);
-            body = new Polyline();
+            // comment: why cant you body!.Points = new PointCollection(snake.Body);
+            // or better yet use something like drawSnake
+            body = new Polyline(); 
             head = new Ellipse();
             foodStock = new FoodCollection(farm);
             obstacles = new List<Obstacle>();
@@ -102,7 +105,12 @@ namespace FeedTheSnake
             
             // GamePause();
             head.MouseLeftButtonDown += (x, y) => { GameStart(); };
+
+            // Comment: This code is brittle, if we add a new property or the length lowers the score will still go up
+            // I don't like that the score auto increments when length evnet comes. The scrore should just take length as the one bellow 
+            // I want to do stuff only when the property length has changes
             snake.PropertyChanged += (x, y) => { Score++; };
+            //Comment: this is better but still I don't like that we don't check whiich property change. I want to do stuff only when the property is ExpirationTime has changes
             farm.PropertyChanged += (x, y) => { ExpiretionTime=farm.ExpiretionTime; };
         }
         #region ClientMethods
@@ -147,8 +155,12 @@ namespace FeedTheSnake
         #endregion
 
         #region DrawingMethods
+
+        // comment I would like a single method draw snake. The snake mkight have eyes, sunglasses, mouth. I don't wantyou to think about it
+        // comment I don't like that this method has access to all the snake game objects
         private void DrawSnakeBody()
         {
+            // Comment: it is a bad practice to use !, if body is null you would still get an error, you are just hiding it
             body!.Points = new PointCollection(snake.Body);
             body.StrokeThickness = snake.Segment;
             body.StrokeLineJoin = PenLineJoin.Round;
@@ -159,6 +171,7 @@ namespace FeedTheSnake
 
         private void DrawSnakeHead()
         {
+            // Comment: it is a bad practice to use !, if Width
             head!.Width = 2 * snake.Segment;
             head.Height = 2 * snake.Segment;
 
@@ -330,6 +343,8 @@ namespace FeedTheSnake
             if (farm.IsNerbyFoodEaten(currentPosition, out int foodIndex))
             {
                 EatFood(foodIndex);
+                // comment: why isn't snake.lenght++ part of eat food
+                // comment: i don't like ++ better to have a method snake eat which increases length
                 snake.Length++;
             }
             if (snake.IsEatingItself() || snake.IsHittingObstacle(obstacles, 0.9))
